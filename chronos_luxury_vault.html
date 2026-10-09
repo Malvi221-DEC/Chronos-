@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHRONOS // Apex Luxury Vault</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#050508',
+                        gold: '#D4AF37',
+                        'gold-light': '#F3E5AB',
+                        'gold-dark': '#997A15',
+                        charcoal: '#121218',
+                        surface: '#1A1A24'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Three.js for 3D Background & Interactive Elements -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            background-color: #050508;
+            color: #F3E5AB;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FFF6D1 0%, #D4AF37 50%, #997A15 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-border {
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .gold-border-glow:hover {
+            border-color: #D4AF37;
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
+        }
+        .glass-panel {
+            background: rgba(18, 18, 24, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050508;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #332B10;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D4AF37;
+        }
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .hero-banner {
+            background: radial-gradient(circle at center, rgba(212,175,55,0.08) 0%, rgba(5,5,8,0.95) 70%);
+        }
+    </style>
+</head>
+<body class="selection:bg-gold selection:text-obsidian">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 transform translate-y-32 opacity-0 transition-all duration-500 glass-panel px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-4 border-gold">
+        <i class="fa-solid fa-crown text-gold text-xl"></i>
+        <div>
+            <h4 id="toast-title" class="font-semibold text-white text-sm">Success</h4>
+            <p id="toast-msg" class="text-xs text-gray-300">Item added to vault.</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full z-40 glass-panel border-b border-gold/10">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full border border-gold flex items-center justify-center bg-obsidian shadow-lg shadow-gold/20">
+                    <i class="fa-solid fa-infinity text-gold text-lg"></i>
+                </div>
+                <div>
+                    <span class="font-serif tracking-widest text-xl font-bold gold-gradient-text">CHRONOS</span>
+                    <span class="block text-[9px] tracking-[0.3em] text-gray-400 uppercase">Apex Vault</span>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-8 text-sm tracking-widest uppercase font-medium">
+                <a href="#collection" class="text-gray-300 hover:text-gold transition-colors">Collection</a>
+                <a href="#features" class="text-gray-300 hover:text-gold transition-colors">Philosophy</a>
+                <a href="#interactive-3d" class="text-gray-300 hover:text-gold transition-colors">3D Artifacts</a>
+                <a href="#discount-banner" class="text-gold font-semibold flex items-center space-x-1">
+                    <i class="fa-solid fa-bolt"></i><span>10% VIP Privilege</span>
+                </a>
+            </nav>
+
+            <div class="flex items-center space-x-5">
+                <button onclick="openCart()" class="relative p-3 rounded-full glass-panel gold-border-glow hover:border-gold transition-all duration-300 group">
+                    <i class="fa-solid fa-bag-shopping text-gold text-lg group-hover:scale-110 transition-transform"></i>
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-gold text-obsidian text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center hero-banner pt-20 px-6">
+        <div class="max-w-5xl mx-auto text-center z-10">
+            <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full glass-panel mb-8 border border-gold/30 shadow-inner">
+                <i class="fa-solid fa-star text-gold text-xs"></i>
+                <span class="text-xs tracking-widest uppercase text-gold font-medium">Futuristic Luxury Edition 2026</span>
+                <i class="fa-solid fa-star text-gold text-xs"></i>
+            </div>
+            
+            <h1 class="font-serif text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-tight">
+                Redefining <span class="gold-gradient-text italic">Prestige</span> Merchandise
+            </h1>
+            
+            <p class="max-w-2xl mx-auto text-gray-400 text-base md:text-lg mb-10 leading-relaxed font-light">
+                Immerse yourself in elite craftsmanship. Engineered with futuristic materials, minimalist lines, and absolute luxury for the visionary generation.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <a href="#collection" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-gold via-gold-light to-gold-dark text-obsidian font-semibold rounded-xl shadow-xl hover:shadow-gold/30 hover:scale-105 transition-all duration-300 tracking-wider uppercase text-sm">
+                    Explore Vault
+                </a>
+                <a href="#interactive-3d" class="w-full sm:w-auto px-8 py-4 glass-panel gold-border text-gold font-semibold rounded-xl hover:bg-gold/10 transition-all duration-300 tracking-wider uppercase text-sm">
+                    Interactive 3D View
+                </a>
+            </div>
+
+            <!-- Discount Banner Prompt -->
+            <div id="discount-banner" class="mt-16 inline-flex items-center space-x-4 px-6 py-3 rounded-2xl glass-panel border border-gold/40 animate-pulse">
+                <div class="w-3 h-3 rounded-full bg-gold"></div>
+                <span class="text-sm font-medium tracking-wide text-white">Use code <span class="text-gold font-bold">CHRONOS10</span> at checkout for an exclusive <span class="text-gold font-bold">10% Off</span></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive 3D Showcase Section -->
+    <section id="interactive-3d" class="py-24 px-6 max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+            <span class="text-xs uppercase tracking-[0.4em] text-gold font-semibold">Immersive Experience</span>
+            <h2 class="font-serif text-3xl md:text-5xl font-bold mt-2">Interactive 3D Artifact Preview</h2>
+            <p class="text-gray-400 mt-3 text-sm max-w-lg mx-auto">Drag and interact with our hallmark architectural geometry in real-time 3D space.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+            <div class="glass-panel p-8 rounded-3xl border border-gold/20 space-y-6">
+                <div class="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center border border-gold/30">
+                    <i class="fa-solid fa-cube text-gold text-xl"></i>
+                </div>
+                <h3 class="font-serif text-2xl font-bold text-white">Quantum Dodecahedron</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    Representing the structural perfection of our merchandise line. Crafted with molecular precision and shimmering metallic finishes.
+                </p>
+                <div class="flex items-center space-x-4 text-xs text-gold">
+                    <span><i class="fa-solid fa-check mr-2"></i>Real-time lighting</span>
+                    <span><i class="fa-solid fa-check mr-2"></i>360° Rotation</span>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 h-[450px] glass-panel rounded-3xl relative overflow-hidden flex items-center justify-center border border-gold/30 shadow-2xl">
+                <div id="canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+                <div class="absolute bottom-6 left-6 px-4 py-2 rounded-lg bg-obsidian/80 backdrop-blur border border-gold/20 text-xs text-gold tracking-widest uppercase">
+                    Interactive Viewport // Drag to rotate
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Merchandise Collection -->
+    <section id="collection" class="py-24 px-6 max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16">
+            <div>
+                <span class="text-xs uppercase tracking-[0.4em] text-gold font-semibold">The Master Catalogue</span>
+                <h2 class="font-serif text-3xl md:text-5xl font-bold mt-2">Exclusive Artifacts</h2>
+            </div>
+            <div class="mt-6 md:mt-0 flex flex-wrap gap-3">
+                <button onclick="filterProducts('all')" class="filter-btn px-5 py-2 rounded-xl glass-panel border border-gold text-gold text-xs uppercase tracking-wider font-semibold transition-all">All</button>
+                <button onclick="filterProducts('apparel')" class="filter-btn px-5 py-2 rounded-xl glass-panel border border-gold/20 text-gray-300 hover:text-gold text-xs uppercase tracking-wider font-semibold transition-all">Apparel</button>
+                <button onclick="filterProducts('gear')" class="filter-btn px-5 py-2 rounded-xl glass-panel border border-gold/20 text-gray-300 hover:text-gold text-xs uppercase tracking-wider font-semibold transition-all">Gear & Tech</button>
+                <button onclick="filterProducts('accessories')" class="filter-btn px-5 py-2 rounded-xl glass-panel border border-gold/20 text-gray-300 hover:text-gold text-xs uppercase tracking-wider font-semibold transition-all">Accessories</button>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Populated via JavaScript -->
+        </div>
+    </section>
+
+    <!-- Product Detail Modal with Image Slider -->
+    <div id="product-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-obsidian/90 backdrop-blur-md">
+        <div class="glass-panel max-w-4xl w-full rounded-3xl border border-gold/40 overflow-hidden shadow-2xl relative grid grid-cols-1 md:grid-cols-2">
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full glass-panel flex items-center justify-center text-gold hover:bg-gold hover:text-obsidian transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Image Slider Container -->
+            <div class="relative bg-obsidian/50 h-80 md:h-full flex items-center justify-center overflow-hidden">
+                <div id="slider-track" class="flex w-full h-full transition-transform duration-500 ease-out">
+                    <!-- Slides injected via JS -->
+                </div>
+                <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full glass-panel flex items-center justify-center text-gold hover:bg-gold/20">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button onclick="nextSlide()" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full glass-panel flex items-center justify-center text-gold hover:bg-gold/20">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <div id="slider-dots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                    <!-- Dots injected via JS -->
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="p-8 flex flex-col justify-between">
+                <div>
+                    <span id="modal-category" class="text-xs uppercase tracking-widest text-gold font-semibold">Category</span>
+                    <h3 id="modal-title" class="font-serif text-3xl font-bold text-white mt-1">Product Title</h3>
+                    <div class="flex items-center space-x-4 mt-4">
+                        <span id="modal-price" class="text-2xl font-bold gold-gradient-text">₹0</span>
+                        <span class="text-xs text-green-400 bg-green-950/50 px-3 py-1 rounded-full border border-green-500/30"><i class="fa-solid fa-shield-halved mr-1"></i> In Stock</span>
+                    </div>
+                    <p id="modal-desc" class="text-gray-300 text-sm mt-6 leading-relaxed">Detailed description of the artifact...</p>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gold/10">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <span class="text-xs uppercase tracking-widest text-gray-400">Select Edition:</span>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1.5 rounded-lg glass-panel border border-gold text-gold text-xs font-semibold">Standard</button>
+                            <button class="px-3 py-1.5 rounded-lg glass-panel border border-gold/30 text-gray-400 hover:text-gold text-xs font-semibold">Collector</button>
+                        </div>
+                    </div>
+                    <button id="modal-add-btn" class="w-full py-4 bg-gradient-to-r from-gold via-gold-light to-gold-dark text-obsidian font-semibold rounded-xl shadow-xl hover:shadow-gold/30 transition-all text-sm uppercase tracking-wider">
+                        Add to Vault Bag
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Drawer -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 hidden justify-end bg-obsidian/80 backdrop-blur-sm">
+        <div class="w-full max-w-md h-full glass-panel border-l border-gold/30 flex flex-col justify-between p-6 shadow-2xl transform transition-transform duration-300">
+            <div>
+                <div class="flex items-center justify-between pb-6 border-b border-gold/20">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-bag-shopping text-gold text-xl"></i>
+                        <h3 class="font-serif text-2xl font-bold text-white">Your Vault Bag</h3>
+                    </div>
+                    <button onclick="closeCart()" class="w-9 h-9 rounded-full glass-panel flex items-center justify-center text-gold hover:bg-gold/20">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cart-items" class="mt-6 space-y-4 max-h-[calc(100vh-350px)] overflow-y-auto pr-2">
+                    <!-- Dynamic Items -->
+                </div>
+            </div>
+
+            <!-- Cart Footer -->
+            <div class="pt-6 border-t border-gold/20 space-y-4">
+                <!-- Promo Code Box -->
+                <div class="flex space-x-2">
+                    <input type="text" id="promo-input" placeholder="Enter Code: CHRONOS10" class="flex-1 bg-obsidian/80 border border-gold/30 rounded-xl px-4 py-3 text-xs text-white uppercase tracking-wider focus:outline-none focus:border-gold">
+                    <button onclick="applyPromo()" class="px-5 py-3 glass-panel border border-gold text-gold text-xs font-semibold uppercase rounded-xl hover:bg-gold hover:text-obsidian transition-colors">Apply</button>
+                </div>
+
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-400">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">₹0</span>
+                    </div>
+                    <div id="discount-row" class="hidden justify-between text-gold">
+                        <span>VIP Discount (10%)</span>
+                        <span id="cart-discount">-₹0</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold text-white pt-2 border-t border-gold/10">
+                        <span>Total</span>
+                        <span id="cart-total" class="gold-gradient-text">₹0</span>
+                    </div>
+                </div>
+
+                <button onclick="checkout()" class="w-full py-4 bg-gradient-to-r from-gold via-gold-light to-gold-dark text-obsidian font-semibold rounded-xl shadow-xl hover:shadow-gold/30 transition-all text-sm uppercase tracking-wider">
+                    Proceed to Secure Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gold/20 py-16 px-6 glass-panel mt-24">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div class="space-y-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full border border-gold flex items-center justify-center bg-obsidian">
+                        <i class="fa-solid fa-infinity text-gold text-sm"></i>
+                    </div>
+                    <span class="font-serif tracking-widest text-lg font-bold gold-gradient-text">CHRONOS</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    The pinnacle of futuristic luxury merchandise. Designed in India for global connoisseurs of elite aesthetic and premium utility.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-serif text-white font-semibold mb-4 tracking-wider uppercase text-xs text-gold">Artifact Categories</h4>
+                <ul class="space-y-2 text-xs text-gray-400">
+                    <li><a href="#collection" class="hover:text-gold transition-colors">Quantum Apparel</a></li>
+                    <li><a href="#collection" class="hover:text-gold transition-colors">Cybernetic Gear</a></li>
+                    <li><a href="#collection" class="hover:text-gold transition-colors">Elite Stationery</a></li>
+                    <li><a href="#collection" class="hover:text-gold transition-colors">ID Card Accessories</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-serif text-white font-semibold mb-4 tracking-wider uppercase text-xs text-gold">Privileges</h4>
+                <ul class="space-y-2 text-xs text-gray-400">
+                    <li><a href="#" class="hover:text-gold transition-colors">VIP Membership</a></li>
+                    <li><a href="#" class="hover:text-gold transition-colors">10% Global Privilege</a></li>
+                    <li><a href="#" class="hover:text-gold transition-colors">Secure Vault Delivery</a></li>
+                    <li><a href="#" class="hover:text-gold transition-colors">Authentication Ledger</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-serif text-white font-semibold mb-4 tracking-wider uppercase text-xs text-gold">Secure Dispatch</h4>
+                <p class="text-xs text-gray-400 leading-relaxed mb-4">
+                    Express insured shipping across India with signature obsidian packaging.
+                </p>
+                <div class="flex space-x-3 text-gold text-lg">
+                    <i class="fa-brands fa-cc-visa"></i>
+                    <i class="fa-brands fa-cc-mastercard"></i>
+                    <i class="fa-solid fa-shield-heart"></i>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-gold/10 text-center text-xs text-gray-500">
+            &copy; 2026 CHRONOS Apex Vault. All Rights Reserved. Crafted with absolute precision.
+        </div>
+    </footer>
+
+    <script>
+        // --- Product Database ---
+        const products = [
+            {
+                id: 1,
+                name: "Chronos Obsidian T-Shirt",
+                category: "apparel",
+                price: 2499,
+                images: [
+                    "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "Crafted from heavy-weight combed Egyptian cotton infused with carbon nano-fibers. Features subtle gold foil branding on the chest."
+            },
+            {
+                id: 2,
+                name: "Aether Neural Hoodie",
+                category: "apparel",
+                price: 5999,
+                images: [
+                    "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "An architectural masterpiece in thermal fleece. Designed with concealed magnetic pockets and brushed gold hardware."
+            },
+            {
+                id: 3,
+                name: "Titanium School & Tech Vault Bag",
+                category: "gear",
+                price: 7499,
+                images: [
+                    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "Water-resistant ballistic nylon backpack with integrated biometric lock compartment and padded laptop vault."
+            },
+            {
+                id: 4,
+                name: "Apex Gold-Accented Cap",
+                category: "accessories",
+                price: 1899,
+                images: [
+                    "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1533867617858-e7d97e0afd8b?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "Structured six-panel cap featuring matte black finish paired with an engraved 24k gold-plated clasp."
+            },
+            {
+                id: 5,
+                name: "Holographic Stationery Set",
+                category: "gear",
+                price: 1499,
+                images: [
+                    "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1516962215378-7fa2e137ae93?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "Includes a gold-edged obsidian notebook with acid-free pages and a heavyweight brass fountain pen."
+            },
+            {
+                id: 6,
+                name: "Thermal Resonance Water Bottle",
+                category: "gear",
+                price: 2199,
+                images: [
+                    "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "Double-walled vacuum insulated titanium flask. Keeps liquids ice-cold for 24 hours or steaming hot for 12."
+            },
+            {
+                id: 7,
+                name: "Vault ID-Card Lanyard & Holder",
+                category: "accessories",
+                price: 999,
+                images: [
+                    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?auto=format&fit=crop&w=800&q=80"
+                ],
+                description: "Aerospace-grade aluminum ID badge casing paired with a jacquard woven silk strap and quick-release buckle."
+            }
+        ];
+
+        let cart = [];
+        let discountApplied = false;
+        let currentModalProduct = null;
+        let currentSlideIndex = 0;
+
+        // --- Render Products ---
+        function renderProducts(filter = 'all') {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            const filtered = filter === 'all' ? products : products.filter(p => p.category === filter);
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-3xl overflow-hidden border border-gold/20 gold-border-glow transition-all duration-300 flex flex-col justify-between group';
+                card.innerHTML = `
+                    <div class="relative overflow-hidden h-72 cursor-pointer" onclick="openModal(${p.id})">
+                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x600/121218/D4AF37?text=Chronos+Vault'">
+                        <div class="absolute top-4 right-4 px-3 py-1 rounded-full glass-panel border border-gold/40 text-[10px] uppercase tracking-widest text-gold font-semibold">
+                            ${p.category}
+                        </div>
+                    </div>
+                    <div class="p-6 flex flex-col justify-between flex-1">
+                        <div>
+                            <h3 onclick="openModal(${p.id})" class="font-serif text-xl font-bold text-white hover:text-gold transition-colors cursor-pointer">${p.name}</h3>
+                            <p class="text-xs text-gray-400 mt-2 line-clamp-2">${p.description}</p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-gold/10 flex items-center justify-between">
+                            <span class="text-lg font-bold gold-gradient-text">₹${p.price.toLocaleString('en-IN')}</span>
+                            <button onclick="addToCart(${p.id})" class="px-4 py-2.5 bg-gradient-to-r from-gold via-gold-light to-gold-dark text-obsidian font-semibold rounded-xl text-xs uppercase tracking-wider hover:scale-105 transition-transform shadow-lg">
+                                Add to Bag
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Filter Buttons Styling
+        function filterProducts(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('border-gold', 'text-gold');
+                btn.classList.add('border-gold/20', 'text-gray-300');
+            });
+            event.target.classList.remove('border-gold/20', 'text-gray-300');
+            event.target.classList.add('border-gold', 'text-gold');
+            renderProducts(category);
+        }
+
+        // --- Modal & Image Slider ---
+        function openModal(id) {
+            currentModalProduct = products.find(p => p.id === id);
+            currentSlideIndex = 0;
+            
+            document.getElementById('modal-category').innerText = currentModalProduct.category;
+            document.getElementById('modal-title').innerText = currentModalProduct.name;
+            document.getElementById('modal-price').innerText = `₹${currentModalProduct.price.toLocaleString('en-IN')}`;
+            document.getElementById('modal-desc').innerText = currentModalProduct.description;
+            
+            document.getElementById('modal-add-btn').onclick = () => {
+                addToCart(currentModalProduct.id);
+                closeModal();
+            };
+
+            renderSlider();
+            document.getElementById('product-modal').classList.remove('hidden');
+            document.getElementById('product-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.remove('flex');
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function renderSlider() {
+            const track = document.getElementById('slider-track');
+            const dots = document.getElementById('slider-dots');
+            
+            track.innerHTML = '';
+            dots.innerHTML = '';
+
+            currentModalProduct.images.forEach((img, idx) => {
+                const slide = document.createElement('div');
+                slide.className = 'w-full h-full flex-shrink-0';
+                slide.innerHTML = `<img src="${img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x600/121218/D4AF37?text=Chronos+Vault'">`;
+                track.appendChild(slide);
+
+                const dot = document.createElement('button');
+                dot.className = `w-2 h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-gold w-6' : 'bg-gold/40'}`;
+                dot.onclick = () => goToSlide(idx);
+                dots.appendChild(dot);
+            });
+            updateSliderPosition();
+        }
+
+        function updateSliderPosition() {
+            const track = document.getElementById('slider-track');
+            track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+            
+            const dots = document.getElementById('slider-dots').children;
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].className = `w-2 h-2 rounded-full transition-all ${i === currentSlideIndex ? 'bg-gold w-6' : 'bg-gold/40'}`;
+            }
+        }
+
+        function nextSlide() {
+            currentSlideIndex = (currentSlideIndex + 1) % currentModalProduct.images.length;
+            updateSliderPosition();
+        }
+
+        function prevSlide() {
+            currentSlideIndex = (currentSlideIndex - 1 + currentModalProduct.images.length) % currentModalProduct.images.length;
+            updateSliderPosition();
+        }
+
+        function goToSlide(idx) {
+            currentSlideIndex = idx;
+            updateSliderPosition();
+        }
+
+        // --- Cart Functions ---
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCartUI();
+            showToast("Added to Vault", `${product.name} secured in your bag.`);
+        }
+
+        function updateCartUI() {
+            const countEl = document.getElementById('cart-count');
+            const itemsContainer = document.getElementById('cart-items');
+            
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            countEl.innerText = totalItems;
+
+            itemsContainer.innerHTML = '';
+            if (cart.length === 0) {
+                itemsContainer.innerHTML = `<p class="text-center text-gray-400 text-xs py-12">Your vault bag is currently empty.</p>`;
+            } else {
+                cart.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between p-4 rounded-2xl glass-panel border border-gold/10';
+                    row.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <img src="${item.images[0]}" class="w-14 h-14 rounded-xl object-cover border border-gold/20" onerror="this.src='https://placehold.co/100x100/121218/D4AF37?text=Vault'">
+                            <div>
+                                <h4 class="font-serif text-white text-sm font-semibold">${item.name}</h4>
+                                <p class="text-xs text-gold mt-1">₹${item.price.toLocaleString('en-IN')} x ${item.qty}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="changeQty(${item.id}, -1)" class="w-7 h-7 rounded-lg glass-panel flex items-center justify-center text-gold hover:bg-gold/20 text-xs">-</button>
+                            <span class="text-xs text-white font-medium">${item.qty}</span>
+                            <button onclick="changeQty(${item.id}, 1)" class="w-7 h-7 rounded-lg glass-panel flex items-center justify-center text-gold hover:bg-gold/20 text-xs">+</button>
+                        </div>
+                    `;
+                    itemsContainer.appendChild(row);
+                });
+            }
+
+            calculateTotals();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => i.id !== id);
+                }
+                updateCartUI();
+            }
+        }
+
+        function applyPromo() {
+            const code = document.getElementById('promo-input').value.trim().toUpperCase();
+            if (code === 'CHRONOS10') {
+                discountApplied = true;
+                document.getElementById('discount-row').classList.remove('hidden');
+                document.getElementById('discount-row').classList.add('flex');
+                showToast("Privilege Applied", "10% VIP discount successfully activated.");
+                calculateTotals();
+            } else {
+                showToast("Invalid Code", "Please enter valid code CHRONOS10 for 10% off.");
+            }
+        }
+
+        function calculateTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const discount = discountApplied ? subtotal * 0.10 : 0;
+            const total = subtotal - discount;
+
+            document.getElementById('cart-subtotal').innerText = `₹${subtotal.toLocaleString('en-IN')}`;
+            document.getElementById('cart-discount').innerText = `-₹${Math.round(discount).toLocaleString('en-IN')}`;
+            document.getElementById('cart-total').innerText = `₹${Math.round(total).toLocaleString('en-IN')}`;
+        }
+
+        function openCart() {
+            document.getElementById('cart-drawer').classList.remove('hidden');
+            document.getElementById('cart-drawer').classList.add('flex');
+        }
+
+        function closeCart() {
+            document.getElementById('cart-drawer').classList.remove('flex');
+            document.getElementById('cart-drawer').classList.add('hidden');
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                showToast("Empty Vault", "Please add artifacts to your bag before checkout.");
+                return;
+            }
+            showToast("Secure Checkout", "Redirecting to encrypted gateway...");
+            setTimeout(() => {
+                cart = [];
+                updateCartUI();
+                closeCart();
+                showToast("Order Confirmed", "Thank you for acquiring CHRONOS merchandise.");
+            }, 2000);
+        }
+
+        function showToast(title, msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-32', 'opacity-0');
+            }, 3500);
+        }
+
+        // --- Three.js Background & 3D Artifact Viewer ---
+        // 1. Background particle/grid scene
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgScene = new THREE.Scene();
+        const bgCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: true });
+        bgRenderer.setSize(window.innerWidth, window.innerHeight);
+        bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 20;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.03,
+            color: 0xD4AF37,
+            transparent: true,
+            opacity: 0.7
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        bgScene.add(particlesMesh);
+        bgCamera.position.z = 5;
+
+        // 2. Interactive 3D Showcase Scene
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xD4AF37, 3, 50);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        const pointLight2 = new THREE.PointLight(0xffffff, 2, 50);
+        pointLight2.position.set(-5, -5, 5);
+        scene.add(pointLight2);
+
+        // Dodecahedron Artifact
+        const geometry = new THREE.DodecahedronGeometry(1.8, 0);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x121218,
+            metalness: 0.9,
+            roughness: 0.1,
+            wireframe: false
+        });
+        const artifact = new THREE.Mesh(geometry, material);
+        scene.add(artifact);
+
+        // Wireframe Overlay
+        const wireGeometry = new THREE.DodecahedronGeometry(1.85, 0);
+        const wireMaterial = new THREE.MeshBasicMaterial({
+            color: 0xD4AF37,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.4
+        });
+        const wireArtifact = new THREE.Mesh(wireGeometry, wireMaterial);
+        scene.add(wireArtifact);
+
+        camera.position.z = 4.5;
+
+        // Mouse Drag Interaction for 3D Artifact
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            artifact.rotation.y += deltaX * 0.008;
+            artifact.rotation.x += deltaY * 0.008;
+            wireArtifact.rotation.y = artifact.rotation.y;
+            wireArtifact.rotation.x = artifact.rotation.x;
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        // Touch support for mobile
+        container.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.touches[0].clientX - previousMousePosition.x;
+            const deltaY = e.touches[0].clientY - previousMousePosition.y;
+
+            artifact.rotation.y += deltaX * 0.008;
+            artifact.rotation.x += deltaY * 0.008;
+            wireArtifact.rotation.y = artifact.rotation.y;
+            wireArtifact.rotation.x = artifact.rotation.x;
+
+            previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
+
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        // Animation Loop
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Background rotation
+            particlesMesh.rotation.y = elapsedTime * 0.05;
+
+            // Artifact auto-rotation when not dragging
+            if (!isDragging) {
+                artifact.rotation.y += 0.005;
+                artifact.rotation.x += 0.002;
+                wireArtifact.rotation.y = artifact.rotation.y;
+                wireArtifact.rotation.x = artifact.rotation.x;
+            }
+
+            bgRenderer.render(bgScene, bgCamera);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            bgCamera.aspect = window.innerWidth / window.innerHeight;
+            bgCamera.updateProjectionMatrix();
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+
+        // Initialize Store on Window Load
+        window.onload = function() {
+            renderProducts('all');
+            animate();
+        };
+    </script>
+</body>
+</html>
